@@ -77,28 +77,45 @@ required folder structure (usage of atomic design + feature modules)
 src/
 
 -- app/ # Global layout/providers
+
 ---- providers.tsx # Theme/Context/Zustand
+
 ---- layout.tsx # Root layout w/ Navbar
 
 -- components/ # Atomic (reusable UI)
+
 ---- ui/ # Atoms: Button.tsx, Card.tsx
+
 ---- molecules/ # ButtonWithIcon.tsx
+
 ---- Navbar.tsx
 
 -- features/ # Feature modules (pages)
+
 ---- home/ # Like your src/static/home
+
 ------ Home.tsx
+
 ------ Home.types.ts
+
 ------ data.ts # Mock projects/skills
+
 ---- projects/
+
 ------ Projects.tsx
+
 ------ ProjectCard.tsx
+
 ---- contact/
 
 -- lib/ # Utils/hooks
+
 ---- hooks.ts
+
 ---- utils.ts
+
 -- types/ # Global TS types
+
 ---- global.types.ts
 
 -- main.tsx
