@@ -1,9 +1,4 @@
-import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import HomePage from "./features/home/Home";
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <HomePage />
-  </StrictMode>,
-);
+createRoot(document.getElementById("root")!).render(<HomePage />);
