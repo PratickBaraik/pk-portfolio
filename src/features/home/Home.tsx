@@ -65,9 +65,9 @@ const Work_Section = () => {
   );
 };
 
-const Contact_Section = () => {
-  return <section className={styles.constact_section}></section>;
-};
+// const Contact_Section = () => {
+//   return <section className={styles.constact_section}></section>;
+// };
 
 const HomePage = () => {
   return (
