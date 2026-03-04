@@ -1,0 +1,58 @@
+/* ***** Intro Section ***** */
+
+.intro_section {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: center;
+
+  gap: clamp(2rem, 6vw, 6rem);
+  padding: clamp(2rem, 6vw, 4rem);
+}
+
+/* Text */
+.intro_section_text {
+  flex: 1;
+}
+
+.intro_section_text h1 {
+  font-size: clamp(2rem, 2vw + 1rem, 2.5rem);
+  margin-bottom: 1rem;
+}
+
+.intro_section_text p {
+  font-size: clamp(0.4rem, 1vw + 0.8rem, 1rem);
+  /* line-height: 1.6; */
+  opacity: 0.9;
+  margin: 0 2rem;
+  /* padding: 0 4rem; */
+}
+
+/* Image - Professional Clamp Control */
+.intro_section_img {
+  width: clamp(260px, 35vw, 520px); /* Clean 30–40% scaling */
+  flex-shrink: 0;
+}
+
+.intro_section_img img {
+  width: 100%;
+  height: auto; /* Maintain natural ratio */
+  display: block;
+  object-fit: cover;
+  /* border-radius: 12px; */
+}
+
+/* ============ RESPONSIVE INTRO SECTION ============  */
+
+@media (max-width: 768px) {
+  .intro_section {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .intro_section_img {
+    width: clamp(220px, 70vw, 400px);
+    margin-top: 2rem;
+  }
+}
