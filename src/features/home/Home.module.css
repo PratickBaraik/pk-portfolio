@@ -198,7 +198,7 @@
 .work_section img:hover {
   cursor: pointer;
   transform: scale(1.05);
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease-in-out;
 }
 
 .work_one .work_two .work_three {
@@ -213,4 +213,41 @@
   padding-top: 1rem;
   align-self: center;
   justify-self: center;
+}
+
+/* ---------- contact section ---------- */
+
+.contact_section {
+  position: relative; /* Required for overlay */
+  width: 100%;
+  min-height: 100vh;
+
+  background: url("../../assets/home/main_canvas.png") center / cover no-repeat;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  gap: clamp(4rem, 8vw, 8rem); /* Fluid spacing */
+  padding: 0 4rem;
+}
+
+/* Overlay */
+.main_container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+
+  z-index: 0;
+}
+
+/* Content above overlay */
+.main_container > * {
+  position: relative;
+  z-index: 1;
 }
