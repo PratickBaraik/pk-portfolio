@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"; // ✅ FIXED: Import hooks from React
+import { useState, useEffect } from "react"; // Import hooks from React
 import styled, { createGlobalStyle } from "styled-components";
 import Main_Canvas from "../../components/regions/Main_section";
 import Intro_Section from "../../components/regions/Intro_section";
