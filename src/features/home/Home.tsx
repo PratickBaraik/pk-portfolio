@@ -65,9 +65,18 @@ const Work_Section = () => {
   );
 };
 
-// const Contact_Section = () => {
-//   return <section className={styles.constact_section}></section>;
-// };
+const Contact_Section = () => {
+  return (
+    <section className={styles.contact_section}>
+      <h1>Let's document your story!</h1>
+      <p>
+        Every story deserves to be remembered. Every moment deserves to be felt
+        again. I’m here to document yours, beautifully.
+      </p>
+      <button>Contact Me</button>
+    </section>
+  );
+};
 
 const HomePage = () => {
   return (
@@ -75,6 +84,7 @@ const HomePage = () => {
       <Main_Canvas />
       <Intro_Section />
       <Work_Section />
+      <Contact_Section />
     </>
   );
 };

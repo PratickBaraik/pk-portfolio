@@ -222,7 +222,8 @@
   width: 100%;
   min-height: 100vh;
 
-  background: url("../../assets/home/main_canvas.png") center / cover no-repeat;
+  background: url("../../assets/home/contact_background.jpeg") center / cover
+    no-repeat;
 
   display: flex;
   flex-direction: column;
@@ -234,7 +235,7 @@
 }
 
 /* Overlay */
-.main_container::before {
+.contact_section::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -247,7 +248,26 @@
 }
 
 /* Content above overlay */
-.main_container > * {
+.contact_section > * {
   position: relative;
   z-index: 1;
+}
+
+/* Typography */
+.contact_section h1 {
+  font-size: clamp(2.2rem, 4vw + 1rem, 5rem);
+  line-height: 1.1;
+  color: #fff;
+}
+
+.contact_section p {
+  font-size: clamp(1rem, 1vw + 0.8rem, 1.4rem);
+  opacity: 0.9;
+  color: #fff;
+}
+
+.contact_section button {
+  padding: 0.6rem 2rem;
+  cursor: pointer;
+  white-space: nowrap;
 }
