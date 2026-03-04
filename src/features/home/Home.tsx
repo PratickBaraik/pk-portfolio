@@ -17,13 +17,13 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
-// Home wrapper (uncommented for positioning context)
-const HomeContainer = styled.div`
-  min-height: 100vh;
-  // background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  overflow-x: hidden;
-  position: relative;
-`;
+// // Home wrapper (uncommented for positioning context)
+// const HomeContainer = styled.div`
+//   min-height: 100vh;
+//   // background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+//   overflow-x: hidden;
+//   position: relative;
+// `;
 
 // Scroll-to-Top Button (your styles - perfect!)
 const ScrollToTopButton = styled.button`
