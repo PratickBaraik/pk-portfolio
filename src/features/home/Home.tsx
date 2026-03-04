@@ -4,6 +4,7 @@ import Main_Canvas from "../../components/regions/Main_section";
 import Intro_Section from "../../components/regions/Intro_section";
 import Work_Section from "../../components/regions/Work_section";
 import Contact_Section from "../../components/regions/Contact_section";
+// import Navbar from "../../components/Navbar";
 
 // Global Reset (your CSS)
 const GlobalStyle = createGlobalStyle`
@@ -94,6 +95,7 @@ const HomePage = () => {
       <Intro_Section />
       <Work_Section />
       <Contact_Section />
+      {/* <Navbar logo="" tagline="" /> */}
       <ScrollToTopButton
         className={showButton ? "visible" : ""}
         onClick={scrollToTop}
