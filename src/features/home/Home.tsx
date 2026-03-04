@@ -28,7 +28,7 @@ const GlobalStyle = createGlobalStyle`
 // Scroll-to-Top Button (your styles - perfect!)
 const ScrollToTopButton = styled.button`
   position: fixed;
-  bottom: 30px;
+  bottom: 50px;
   right: 30px;
   width: 50px;
   height: 50px;
