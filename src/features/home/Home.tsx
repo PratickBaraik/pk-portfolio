@@ -89,22 +89,20 @@ const HomePage = () => {
   return (
     <>
       <GlobalStyle />
-      <HomeContainer>
-        {" "}
-        {/* ✅ Added wrapper for better structure */}
-        <Main_Canvas />
-        <Intro_Section />
-        <Work_Section />
-        <Contact_Section />
-        <ScrollToTopButton
-          className={showButton ? "visible" : ""}
-          onClick={scrollToTop}
-          title="Back to Top"
-          aria-label="Scroll to top"
-        >
-          ↑
-        </ScrollToTopButton>
-      </HomeContainer>
+      {/* <HomeContainer> */} {/* ✅ Added wrapper for better structure */}
+      <Main_Canvas />
+      <Intro_Section />
+      <Work_Section />
+      <Contact_Section />
+      <ScrollToTopButton
+        className={showButton ? "visible" : ""}
+        onClick={scrollToTop}
+        title="Back to Top"
+        aria-label="Scroll to top"
+      >
+        ↑
+      </ScrollToTopButton>
+      {/* </HomeContainer> */}
     </>
   );
 };
