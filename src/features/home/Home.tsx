@@ -77,7 +77,7 @@ const HomePage: React.FC = () => {
       <Contact_Section />
 
       {/* Scroll to top button */}
-      {showButton && <ScrollToTop showAfter={600} />}
+      <ScrollToTop showAfter={600} />
 
       {/* Footer */}
       <Footer />
