@@ -1,21 +1,28 @@
-import { useState } from "react"; // Import hooks from React
+import { useState } from "react";
 import { createGlobalStyle } from "styled-components";
+
 import Main_Canvas from "../../components/regions/Main_section";
 import Intro_Section from "../../components/regions/Intro_section";
 import Work_Section from "../../components/regions/Work_section";
 import Contact_Section from "../../components/regions/Contact_section";
+
 import Footer from "../../components/molecules/Footer";
-
 import ScrollToTop from "../../components/molecules/ScrollTop";
-
 import Navbar from "../../components/molecules/Navbar";
 
+/**
+ * Navigation item type definition
+ * Ensures type-safe navigation configuration
+ */
 type NavItem = {
   label: string;
   href: string;
 };
 
-// Global Reset (your CSS)
+/**
+ * Global CSS Reset
+ * Keeps styling consistent across browsers
+ */
 const GlobalStyle = createGlobalStyle`
   *,
   *::before,
@@ -27,30 +34,52 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
-// Main component
-const HomePage = () => {
+/**
+ * HomePage
+ * Main landing page composition for the portfolio
+ */
+const HomePage: React.FC = () => {
+  /**
+   * Navigation configuration
+   * Passed to Navbar as props
+   */
   const navLinks: NavItem[] = [
     { label: "Home", href: "#home" },
-    { label: "Works", href: "#work" },
+    { label: "Works", href: "#works" },
     { label: "Gearlist", href: "#gearlist" },
-    { label: "About Me", href: "#about" },
+    { label: "About", href: "#about" },
     { label: "Contact", href: "#contact" },
   ];
 
+  /**
+   * Scroll-to-top button visibility state
+   */
   const [showButton] = useState(false);
 
   return (
     <>
+      {/* Global CSS reset */}
       <GlobalStyle />
-      {/* <HomeContainer> */} {/* ✅ Added wrapper for better structure */}
-      <Navbar links={navLinks} />
+
+      {/* Navigation */}
+      <Navbar brand="PK Portfolio" links={navLinks} />
+
+      {/* Main landing canvas */}
       <Main_Canvas />
+
+      {/* Introduction section */}
       <Intro_Section />
+
+      {/* Work showcase */}
       <Work_Section />
+
+      {/* Contact section */}
       <Contact_Section />
-      {/* <Navbar logo="" tagline="" /> */}
-      {showButton && <ScrollToTop showAfter={600} />}{" "}
-      {/* Show button after Intro */}
+
+      {/* Scroll to top button */}
+      {showButton && <ScrollToTop showAfter={600} />}
+
+      {/* Footer */}
       <Footer />
     </>
   );
