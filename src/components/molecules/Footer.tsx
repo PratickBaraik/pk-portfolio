@@ -1,9 +1,9 @@
 import styles from "./Footer.module.css";
-import logo from "../assets/logo.png";
-import fb from "../assets/social/facebook.png";
-import ig from "../assets/social/instagram.png";
-import yt from "../assets/social/youtube.png";
-import li from "../assets/social/linkedin.png";
+import logo from "./logo.png";
+import fb from "./social/facebook.png";
+import ig from "./social/instagram.png";
+import yt from "./social/youtube.png";
+import li from "./social/linkedin.png";
 
 const Footer = () => {
   return (

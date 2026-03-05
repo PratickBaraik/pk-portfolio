@@ -1,5 +1,20 @@
-import { createRoot } from "react-dom/client";
-import HomePage from "./features/home/Home";
-// import Footer from "./components/Footer";
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
 
-createRoot(document.getElementById("root")!).render(<HomePage />);
+import AppRouter from "./router/AppRouter";
+
+const rootElement = document.getElementById("root");
+
+if (!rootElement) {
+  throw new Error("Root element with id 'root' not found in index.html");
+}
+
+ReactDOM.createRoot(rootElement).render(
+  <React.StrictMode>
+    {/* BrowserRouter enables client-side routing */}
+    <BrowserRouter>
+      <AppRouter />
+    </BrowserRouter>
+  </React.StrictMode>,
+);
