@@ -14,7 +14,7 @@ const Work_Section = () => {
         </div>
         <div className={styles.work_two}>
           <img src={video_work} alt="Prakashit doing videography work" />
-          <h2>Videography</h2>
+          <h2>Photography</h2>
         </div>
         <div className={styles.work_three}>
           <img src={drone_work} alt="Prakashit doing drone footage work" />
