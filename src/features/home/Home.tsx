@@ -1,10 +1,10 @@
 // import { useState } from "react";
 import { createGlobalStyle } from "styled-components";
 
-import Main_Canvas from "../../components/regions/Main_section";
-import Intro_Section from "../../components/regions/Intro_section";
-import Work_Section from "../../components/regions/Work_section";
-import Contact_Section from "../../components/regions/Contact_section";
+import Main_Canvas from "../../components/regions/home/Main_section";
+import Intro_Section from "../../components/regions/home/Intro_section";
+import Work_Section from "../../components/regions/home/Work_section";
+import Contact_Section from "../../components/regions/home/Contact_section";
 
 import Footer from "../../components/molecules/Footer";
 import ScrollToTop from "../../components/molecules/ScrollTop";

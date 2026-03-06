@@ -1,5 +1,5 @@
 import styles from "./style/Intro.module.css";
-import self_portrait from "../../assets/home/self_portriat.jpg";
+import self_portrait from "./assets/self_portriat.jpg";
 
 const Intro_Section = () => {
   return (

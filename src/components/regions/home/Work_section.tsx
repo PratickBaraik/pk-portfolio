@@ -1,7 +1,7 @@
 import styles from "./style/Work.module.css";
-import cine_work from "../../assets/home/cinematics_work.jpg";
-import video_work from "../../assets/home/video_work.jpg";
-import drone_work from "../../assets/home/drone_work.png";
+import cine_work from "./assets/cinematics_work.jpg";
+import video_work from "./assets/video_work.jpg";
+import drone_work from "./assets/drone_work.png";
 
 const Work_Section = () => {
   return (
