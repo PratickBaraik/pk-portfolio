@@ -1,4 +1,4 @@
-import { useState } from "react";
+// import { useState } from "react";
 import { createGlobalStyle } from "styled-components";
 
 import Main_Canvas from "../../components/regions/Main_section";
@@ -54,7 +54,7 @@ const HomePage: React.FC = () => {
   /**
    * Scroll-to-top button visibility state
    */
-  const [showButton] = useState(false);
+  // const [showButton] = useState(false);
 
   return (
     <>
