@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import { Menu, X } from "lucide-react";
+import { Link } from "react-router-dom";
 
 type NavItem = {
   label: string;
@@ -62,7 +63,7 @@ const NavLinks = styled.ul`
   }
 `;
 
-const NavLink = styled.a`
+const NavLink = styled(Link)`
   position: relative;
   text-decoration: none;
   color: black;
@@ -122,7 +123,7 @@ const MobileLinks = styled.ul`
   gap: 26px;
 `;
 
-const MobileLink = styled.a`
+const MobileLink = styled(Link)`
   text-decoration: none;
   font-size: 18px;
   color: black;
@@ -144,7 +145,7 @@ const Navbar: React.FC<NavbarProps> = ({ links, brand = "Brand" }) => {
           <NavLinks>
             {links.map((link) => (
               <li key={link.href}>
-                <NavLink href={link.href}>{link.label}</NavLink>
+                <NavLink to={link.href}>{link.label}</NavLink>
               </li>
             ))}
           </NavLinks>
@@ -165,7 +166,7 @@ const Navbar: React.FC<NavbarProps> = ({ links, brand = "Brand" }) => {
         <MobileLinks>
           {links.map((link) => (
             <li key={link.href}>
-              <MobileLink href={link.href} onClick={() => setOpen(false)}>
+              <MobileLink to={link.href} onClick={() => setOpen(false)}>
                 {link.label}
               </MobileLink>
             </li>

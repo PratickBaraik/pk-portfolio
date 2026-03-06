@@ -43,12 +43,16 @@ const HomePage: React.FC = () => {
    * Navigation configuration
    * Passed to Navbar as props
    */
+  /**
+   * Navigation configuration
+   * These paths correspond to React Router routes
+   */
   const navLinks: NavItem[] = [
-    { label: "Home", href: "#home" },
-    { label: "Works", href: "#works" },
-    { label: "Gearlist", href: "#gearlist" },
-    { label: "About", href: "#about" },
-    { label: "Contact", href: "#contact" },
+    { label: "Home", href: "/" },
+    { label: "Works", href: "/works" },
+    { label: "Gearlist", href: "/gearlist" },
+    { label: "About", href: "/about" },
+    { label: "Contact", href: "/contact" },
   ];
 
   /**

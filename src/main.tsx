@@ -1,13 +1,16 @@
-// import React from "react";
 import ReactDOM from "react-dom/client";
-import HomePage from "./features/home/Home";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-/**
- * Entry point of the React application.
- * Mounts the HomePage component to the DOM root.
- */
+import HomePage from "./features/home/Home";
+import Works from "./features/works/Works";
+// import Gearlist from "./features/gearlist/Gearlist";
+
 ReactDOM.createRoot(document.getElementById("root")!).render(
-  // <React.StrictMode>
-  <HomePage />,
-  // </React.StrictMode>,
+  <BrowserRouter>
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/works" element={<Works />} />
+      {/* <Route path="/gearlist" element={<Gearlist />} /> */}
+    </Routes>
+  </BrowserRouter>,
 );
