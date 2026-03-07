@@ -2,13 +2,17 @@ import { Resend } from "resend";
 
 /**
  * Initialize Resend client using environment API key
+ * Stored securely in Vercel Environment Variables
  */
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 /**
- * Vercel serverless API handler
+ * Serverless function for handling contact form
  */
 export default async function handler(req, res) {
+  /**
+   * Allow only POST requests
+   */
   if (req.method !== "POST") {
     return res.status(405).json({
       success: false,
@@ -17,8 +21,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { name, email, message } = req.body;
+    const { name, email, message, company } = req.body;
 
+    /**
+     * Honeypot spam protection
+     * If this hidden field is filled, treat as bot
+     */
     if (company) {
       return res.status(400).json({
         success: false,
@@ -26,6 +34,9 @@ export default async function handler(req, res) {
       });
     }
 
+    /**
+     * Validate required fields
+     */
     if (!name || !email || !message) {
       return res.status(400).json({
         success: false,
@@ -33,6 +44,9 @@ export default async function handler(req, res) {
       });
     }
 
+    /**
+     * Prevent excessively large messages
+     */
     if (message.length > 2000) {
       return res.status(400).json({
         success: false,
@@ -40,12 +54,21 @@ export default async function handler(req, res) {
       });
     }
 
+    /**
+     * Send email using Resend
+     */
     await resend.emails.send({
       from: "Portfolio Contact <onboarding@resend.dev>",
       to: "pratickbaraik56@gmail.com",
       replyTo: email,
-      subject: `🎉 ${name} wants to connect with you via Portfolio`,
-      text: `Name: ${name}\nEmail: ${email}\n\n${message}`,
+      subject: `${name} contacted you via portfolio`,
+      text: `
+Name: ${name}
+Email: ${email}
+
+Message:
+${message}
+      `,
     });
 
     return res.status(200).json({

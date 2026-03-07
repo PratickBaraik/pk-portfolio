@@ -1,8 +1,0 @@
-{
-  "compilerOptions": {
-    "module": "CommonJS",
-    "target": "ES2022",
-    "outDir": "api-build"
-  },
-  "include": ["api"]
-}
