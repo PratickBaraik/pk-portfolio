@@ -3,7 +3,7 @@ import styles from "./Footer.module.css";
 
 import logo from "./logo.png";
 import fb from "./social/facebook.png";
-import ig from "./social/instagram.png";
+import ig from "./social/instagram.jpg";
 import yt from "./social/youtube.png";
 import li from "./social/linkedin.png";
 
