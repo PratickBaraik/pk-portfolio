@@ -6,7 +6,7 @@ import nodemailer from "nodemailer";
 const RATE_LIMIT_WINDOW = 60 * 1000;
 const RATE_LIMIT_MAX = 5;
 
-// let requestLog: number[] = [];
+let requestLog = [];
 
 /**
  * Email validation regex
