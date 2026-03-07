@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { Resend } from "resend";
 
 /**
- * Initialize Resend client using API key stored in environment variables
+ * Initialize Resend client using API key from environment variables
  */
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -15,22 +15,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { name, email, message } = req.body;
+    const { client_name, client_email, client_message } = req.body;
 
     /**
-     * Send email
+     * Send email using Resend
      */
     await resend.emails.send({
-      from: "Portfolio Contact <onboarding@resend.dev>", // verified sender required
-      to: "demo1@gmail.com",
-      replyTo: email,
-      subject: `New portfolio inquiry from ${name}`,
+      from: "Portfolio Contact <onboarding@resend.dev>", // verified sender
+      to: "pratickbaraik56@gmail.com",
+      replyTo: client_email,
+      subject: `New portfolio inquiry from ${client_name}`,
       text: `
-Client Name: ${name}
-Client Email: ${email}
+Client Name: ${client_name}
+Client Email: ${client_email}
 
 Message:
-${message}
+${client_message}
 `,
     });
 
@@ -39,7 +39,7 @@ ${message}
       message: "Email sent successfully",
     });
   } catch (error) {
-    console.error(error);
+    console.error("Email sending failed:", error);
 
     return res.status(500).json({
       success: false,
