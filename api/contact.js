@@ -6,12 +6,9 @@ import { Resend } from "resend";
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 /**
- * Contact API endpoint
+ * Vercel serverless API handler
  */
 export default async function handler(req, res) {
-  /**
-   * Only allow POST requests
-   */
   if (req.method !== "POST") {
     return res.status(405).json({
       success: false,
@@ -22,9 +19,6 @@ export default async function handler(req, res) {
   try {
     const { name, email, message, company } = req.body;
 
-    /**
-     * Honeypot spam protection
-     */
     if (company) {
       return res.status(400).json({
         success: false,
@@ -32,9 +26,6 @@ export default async function handler(req, res) {
       });
     }
 
-    /**
-     * Validation
-     */
     if (!name || !email || !message) {
       return res.status(400).json({
         success: false,
@@ -49,21 +40,12 @@ export default async function handler(req, res) {
       });
     }
 
-    /**
-     * Send email
-     */
     await resend.emails.send({
-      from: "Portfolio Contact <onboarding@resend.dev>", // FIXED
+      from: "Portfolio Contact <onboarding@resend.dev>",
       to: "pratickbaraik56@gmail.com",
       replyTo: email,
       subject: `🎉 ${name} wants to connect with you via Portfolio`,
-      text: `
-Name: ${name}
-Email: ${email}
-
-Message:
-${message}
-`,
+      text: `Name: ${name}\nEmail: ${email}\n\n${message}`,
     });
 
     return res.status(200).json({
