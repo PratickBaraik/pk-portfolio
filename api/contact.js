@@ -35,21 +35,29 @@ function escapeHtml(text) {
 
 export default async function handler(req, res) {
   /**
+   * Allow only POST
+   */
+  if (req.method !== "POST") {
+    return res.status(405).json({
+      success: false,
+      error: "Method not allowed",
+    });
+  }
+
+  /**
    * Read environment variables
    */
   const SMTP_HOST = process.env.SMTP_HOST || "smtp-relay.brevo.com";
-
   const SMTP_PORT = Number(process.env.SMTP_PORT) || 587;
-
   const SMTP_USER = process.env.SMTP_USER;
   const SMTP_PASS = process.env.SMTP_PASS;
   const EMAIL_RECEIVER = process.env.EMAIL_RECEIVER;
 
   /**
-   * If credentials missing, return readable error
+   * Validate configuration safely
    */
   if (!SMTP_USER || !SMTP_PASS || !EMAIL_RECEIVER) {
-    console.error("Missing SMTP environment variables:", {
+    console.error("SMTP configuration missing", {
       SMTP_USER: !!SMTP_USER,
       SMTP_PASS: !!SMTP_PASS,
       EMAIL_RECEIVER: !!EMAIL_RECEIVER,
@@ -57,12 +65,12 @@ export default async function handler(req, res) {
 
     return res.status(500).json({
       success: false,
-      error: "Email service not configured correctly",
+      error: "Email service is not configured",
     });
   }
 
   /**
-   * Create SMTP transporter
+   * Create transporter safely
    */
   const transporter = nodemailer.createTransport({
     host: SMTP_HOST,
@@ -74,20 +82,13 @@ export default async function handler(req, res) {
     },
   });
 
-  if (req.method !== "POST") {
-    return res.status(405).json({
-      success: false,
-      error: "Method not allowed",
-    });
-  }
-
   try {
-    const now = Date.now();
-
     /**
      * Rate limiting
      */
-    requestLog = requestLog.filter((time) => now - time < RATE_LIMIT_WINDOW);
+    const now = Date.now();
+
+    requestLog = requestLog.filter((t) => now - t < RATE_LIMIT_WINDOW);
 
     if (requestLog.length >= RATE_LIMIT_MAX) {
       return res.status(429).json({
@@ -101,7 +102,7 @@ export default async function handler(req, res) {
     const { name, email, message, company } = req.body;
 
     /**
-     * Honeypot spam protection
+     * Honeypot spam trap
      */
     if (company) {
       return res.status(400).json({
@@ -111,7 +112,7 @@ export default async function handler(req, res) {
     }
 
     /**
-     * Validate inputs
+     * Required fields
      */
     if (!name || !email || !message) {
       return res.status(400).json({
@@ -120,6 +121,9 @@ export default async function handler(req, res) {
       });
     }
 
+    /**
+     * Email validation
+     */
     if (!emailRegex.test(email)) {
       return res.status(400).json({
         success: false,
@@ -127,6 +131,9 @@ export default async function handler(req, res) {
       });
     }
 
+    /**
+     * Limit message size
+     */
     if (message.length > 2000) {
       return res.status(400).json({
         success: false,
@@ -134,6 +141,9 @@ export default async function handler(req, res) {
       });
     }
 
+    /**
+     * Sanitize inputs
+     */
     const safeName = sanitize(name);
     const safeEmail = sanitize(email);
     const safeMessage = sanitize(message);
