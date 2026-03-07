@@ -1,0 +1,96 @@
+/* Main container for the contact section */
+.contact_section {
+  max-width: 600px;
+  margin: 60px auto;
+  padding: 40px 30px;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Section title */
+.contact_section h2 {
+  text-align: center;
+  margin-bottom: 25px;
+  font-size: 28px;
+  font-weight: 600;
+  color: #222;
+}
+
+/* Form layout */
+.contact_form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Labels */
+.contact_form label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #444;
+}
+
+/* Input fields */
+.contact_form input,
+.contact_form textarea {
+  width: 95%;
+  padding: 10px 12px;
+  border: 1px solid #dcdcdc;
+  border-radius: 6px;
+  font-size: 14px;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+  outline: none;
+}
+
+/* Focus state */
+.contact_form input:focus,
+.contact_form textarea:focus {
+  border-color: #4a7cff;
+  box-shadow: 0 0 0 2px rgba(74, 124, 255, 0.15);
+}
+
+/* Textarea resizing behavior */
+.contact_form textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+/* Submit button */
+.contact_form button {
+  align-self: center;
+  width: 30%;
+  margin-top: 10px;
+  padding: 1rem 0.8rem;
+  border: none;
+  /* border-radius: 6px; */
+  background-color: #4a7cff;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    transform 0.05s ease;
+}
+
+/* Hover state */
+.contact_form button:hover {
+  background-color: #365fd6;
+}
+
+/* Click feedback */
+.contact_form button:active {
+  transform: scale(0.98);
+}
+
+/* Responsive behavior */
+@media (max-width: 640px) {
+  .contact_section {
+    margin: 30px 16px;
+    padding: 25px 20px;
+  }
+}

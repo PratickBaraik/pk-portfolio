@@ -1,63 +1,86 @@
 import React, { useRef } from "react";
-import emailjs from "@emailjs/browser";
-// import "./Contact.css";
+import styles from "./style/Form.module.css";
 
 /**
- * Contact form component
- * Sends email to site owner using EmailJS Gmail service
+ * Contact component
+ * Sends contact form data to Vercel serverless API
  */
 const Contact: React.FC = () => {
   const form = useRef<HTMLFormElement>(null);
 
-  /**
-   * Handles form submission and sends email
-   */
-  const sendEmail = (e: React.FormEvent<HTMLFormElement>) => {
+  const sendEmail = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!form.current) return;
 
-    emailjs
-      .sendForm(
-        "service_98lf5id", // Gmail service ID from EmailJS
-        "template_lm10zql", // Email template ID
-        form.current,
-        "oTqTkO3nNjSsWxsD1", // EmailJS public key
-      )
-      .then(
-        () => {
-          alert("Message sent successfully");
-        },
-        (error) => {
-          console.error(error);
-          alert("Failed to send message");
-        },
-      );
+    /**
+     * Cast form for TypeScript field access
+     */
+    const formData = form.current as HTMLFormElement & {
+      client_name: { value: string };
+      client_email: { value: string };
+      client_message: { value: string };
+    };
 
-    e.currentTarget.reset();
+    const payload = {
+      name: formData.client_name.value,
+      email: formData.client_email.value,
+      message: formData.client_message.value,
+    };
+
+    try {
+      /**
+       * Send POST request to serverless API
+       */
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error);
+      }
+
+      alert("Message sent successfully!");
+
+      form.current.reset();
+    } catch (error) {
+      console.error("Contact API error:", error);
+      alert("Failed to send message");
+    }
   };
 
   return (
-    <section className="contact-section">
+    <section className={styles.contact_section}>
       <h2>Contact</h2>
 
-      <form ref={form} onSubmit={sendEmail} className="contact-form">
+      <form ref={form} onSubmit={sendEmail} className={styles.contact_form}>
         <label>Name</label>
-        <input type="text" name="name" placeholder="Enter your name" required />
+        <input
+          type="text"
+          name="client_name"
+          placeholder="Enter your name"
+          required
+        />
 
-        <label>Email Address</label>
+        <label>Email</label>
         <input
           type="email"
-          name="email_client"
+          name="client_email"
           placeholder="Enter your email"
           required
         />
 
         <label>Message</label>
         <textarea
-          name="message"
-          placeholder="Enter your message"
+          name="client_message"
           rows={5}
+          placeholder="Enter your message"
           required
         />
 
