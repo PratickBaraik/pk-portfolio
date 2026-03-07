@@ -2,35 +2,69 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { Resend } from "resend";
 
 /**
- * Initialize Resend client using API key from environment variables
+ * Initialize Resend client using environment API key
  */
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+/**
+ * Contact API endpoint
+ */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   /**
-   * Allow only POST requests
+   * Only allow POST requests
    */
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({
+      success: false,
+      error: "Method not allowed",
+    });
   }
 
   try {
-    const { client_name, client_email, client_message } = req.body;
+    const { name, email, message, company } = req.body;
 
     /**
-     * Send email using Resend
+     * Honeypot spam protection
+     * Bots often fill hidden fields
+     */
+    if (company) {
+      return res.status(400).json({
+        success: false,
+        error: "Spam detected",
+      });
+    }
+
+    /**
+     * Basic validation
+     */
+    if (!name || !email || !message) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing required fields",
+      });
+    }
+
+    if (message.length > 2000) {
+      return res.status(400).json({
+        success: false,
+        error: "Message too long",
+      });
+    }
+
+    /**
+     * Send email via Resend
      */
     await resend.emails.send({
-      from: "Portfolio Contact <onboarding@resend.dev>", // verified sender
+      from: "Portfolio Contact <onboarding@resend.dev>",
       to: "pratickbaraik56@gmail.com",
-      replyTo: client_email,
-      subject: `New portfolio inquiry from ${client_name}`,
+      replyTo: email,
+      subject: `New portfolio message from ${name}`,
       text: `
-Client Name: ${client_name}
-Client Email: ${client_email}
+Name: ${name}
+Email: ${email}
 
 Message:
-${client_message}
+${message}
 `,
     });
 
@@ -39,7 +73,7 @@ ${client_message}
       message: "Email sent successfully",
     });
   } catch (error) {
-    console.error("Email sending failed:", error);
+    console.error("Contact API Error:", error);
 
     return res.status(500).json({
       success: false,
