@@ -25,7 +25,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     /**
      * Honeypot spam protection
-     * Bots often fill hidden fields
      */
     if (company) {
       return res.status(400).json({
@@ -35,7 +34,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     /**
-     * Basic validation
+     * Validation
      */
     if (!name || !email || !message) {
       return res.status(400).json({
@@ -52,10 +51,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     /**
-     * Send email via Resend
+     * Send email
      */
     await resend.emails.send({
-      from: name,
+      from: "Portfolio Contact <onboarding@resend.dev>", // FIXED
       to: "pratickbaraik56@gmail.com",
       replyTo: email,
       subject: `🎉 ${name} wants to connect with you via Portfolio`,
