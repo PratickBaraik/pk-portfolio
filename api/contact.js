@@ -1,11 +1,20 @@
+/**
+ * Vercel Serverless Function
+ * Handles portfolio contact form submissions
+ */
+
 import nodemailer from "nodemailer";
 
 /**
- * Rate limit configuration
+ * Rate limit settings
+ * Allows 5 requests per minute
  */
 const RATE_LIMIT_WINDOW = 60 * 1000;
 const RATE_LIMIT_MAX = 5;
 
+/**
+ * Stores timestamps of requests
+ */
 let requestLog = [];
 
 /**
@@ -14,17 +23,19 @@ let requestLog = [];
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
- * Sanitize input
+ * Removes newline characters and trims input
+ * Helps prevent email header injection
  */
 function sanitize(value) {
   if (!value) return "";
+
   return String(value)
     .replace(/[\r\n]/g, "")
     .trim();
 }
 
 /**
- * Escape HTML
+ * Escapes HTML characters to prevent HTML injection
  */
 function escapeHtml(text) {
   return text
@@ -33,7 +44,13 @@ function escapeHtml(text) {
     .replace(/>/g, "&gt;");
 }
 
+/**
+ * Main API handler
+ */
 export default async function handler(req, res) {
+  /**
+   * Only allow POST requests
+   */
   if (req.method !== "POST") {
     return res.status(405).json({
       success: false,
@@ -43,19 +60,20 @@ export default async function handler(req, res) {
 
   try {
     /**
-     * Read environment variables
+     * Load SMTP configuration from environment variables
+     * These must be set in Vercel dashboard
      */
-    const SMTP_HOST = process.env.SMTP_HOST;
-    const SMTP_PORT = process.env.SMTP_PORT;
+    const SMTP_HOST = process.env.SMTP_HOST || "smtp-relay.brevo.com";
+    const SMTP_PORT = Number(process.env.SMTP_PORT) || 587;
     const SMTP_USER = process.env.SMTP_USER;
     const SMTP_PASS = process.env.SMTP_PASS;
     const EMAIL_RECEIVER = process.env.EMAIL_RECEIVER;
 
     /**
-     * If SMTP not configured return readable error
+     * Ensure required variables exist
      */
     if (!SMTP_USER || !SMTP_PASS || !EMAIL_RECEIVER) {
-      console.log("SMTP configuration missing");
+      console.error("SMTP environment variables missing");
 
       return res.status(500).json({
         success: false,
@@ -64,11 +82,11 @@ export default async function handler(req, res) {
     }
 
     /**
-     * Create transporter
+     * Create SMTP transporter
      */
     const transporter = nodemailer.createTransport({
-      host: SMTP_HOST || "smtp-relay.brevo.com",
-      port: Number(SMTP_PORT) || 587,
+      host: SMTP_HOST,
+      port: SMTP_PORT,
       secure: false,
       auth: {
         user: SMTP_USER,
@@ -77,7 +95,7 @@ export default async function handler(req, res) {
     });
 
     /**
-     * Rate limiting
+     * Rate limiting logic
      */
     const now = Date.now();
 
@@ -86,16 +104,19 @@ export default async function handler(req, res) {
     if (requestLog.length >= RATE_LIMIT_MAX) {
       return res.status(429).json({
         success: false,
-        error: "Too many requests",
+        error: "Too many requests. Please try again later.",
       });
     }
 
     requestLog.push(now);
 
+    /**
+     * Extract form data
+     */
     const { name, email, message, company } = req.body;
 
     /**
-     * Honeypot spam protection
+     * Honeypot spam field
      */
     if (company) {
       return res.status(400).json({
@@ -105,7 +126,7 @@ export default async function handler(req, res) {
     }
 
     /**
-     * Validate inputs
+     * Validate required fields
      */
     if (!name || !email || !message) {
       return res.status(400).json({
@@ -114,6 +135,9 @@ export default async function handler(req, res) {
       });
     }
 
+    /**
+     * Validate email format
+     */
     if (!emailRegex.test(email)) {
       return res.status(400).json({
         success: false,
@@ -121,6 +145,9 @@ export default async function handler(req, res) {
       });
     }
 
+    /**
+     * Prevent extremely large messages
+     */
     if (message.length > 2000) {
       return res.status(400).json({
         success: false,
@@ -128,10 +155,16 @@ export default async function handler(req, res) {
       });
     }
 
+    /**
+     * Sanitize inputs
+     */
     const safeName = sanitize(name);
     const safeEmail = sanitize(email);
     const safeMessage = sanitize(message);
 
+    /**
+     * Convert message to HTML
+     */
     const htmlMessage = escapeHtml(safeMessage).replace(/\n/g, "<br>");
 
     /**
@@ -160,11 +193,17 @@ ${safeMessage}
 `,
     });
 
+    /**
+     * Success response
+     */
     return res.status(200).json({
       success: true,
       message: "Email sent successfully",
     });
   } catch (error) {
+    /**
+     * Catch runtime errors
+     */
     console.error("Contact API Error:", error);
 
     return res.status(500).json({
