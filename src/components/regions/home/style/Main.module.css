@@ -5,7 +5,7 @@
   width: 100%;
   min-height: 100vh;
 
-  background: url("../assets/main_canvas.png") center / cover no-repeat;
+  background: url("../assets/main_canvas.jpg") center / cover no-repeat;
 
   display: flex;
   flex-direction: column;
