@@ -1,37 +1,7 @@
 import nodemailer from "nodemailer";
 
 /**
- * Ensure required environment variables exist
- */
-const requiredEnv = [
-  "SMTP_HOST",
-  "SMTP_PORT",
-  "SMTP_USER",
-  "SMTP_PASS",
-  "EMAIL_RECEIVER",
-];
-
-for (const key of requiredEnv) {
-  if (!process.env[key]) {
-    throw new Error(`Missing environment variable: ${key}`);
-  }
-}
-
-/**
- * SMTP transporter (Brevo)
- */
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT),
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
-
-/**
- * Basic in-memory rate limiting
+ * Rate limiting configuration
  */
 const RATE_LIMIT_WINDOW = 60 * 1000;
 const RATE_LIMIT_MAX = 5;
@@ -39,12 +9,12 @@ const RATE_LIMIT_MAX = 5;
 // let requestLog: number[] = [];
 
 /**
- * Email validation
+ * Email validation regex
  */
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
- * Sanitize inputs
+ * Input sanitization
  */
 function sanitize(input) {
   if (!input) return "";
@@ -63,10 +33,37 @@ function escapeHtml(text) {
     .replace(/>/g, "&gt;");
 }
 
-/**
- * Serverless API handler
- */
 export default async function handler(req, res) {
+  /**
+   * Check required environment variables
+   */
+  const SMTP_HOST = process.env.SMTP_HOST;
+  const SMTP_PORT = process.env.SMTP_PORT;
+  const SMTP_USER = process.env.SMTP_USER;
+  const SMTP_PASS = process.env.SMTP_PASS;
+  const EMAIL_RECEIVER = process.env.EMAIL_RECEIVER;
+
+  if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS || !EMAIL_RECEIVER) {
+    console.error("Missing environment variables");
+    return res.status(500).json({
+      success: false,
+      error: "Server configuration error",
+    });
+  }
+
+  /**
+   * Create transporter inside handler
+   */
+  const transporter = nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: Number(SMTP_PORT),
+    secure: false,
+    auth: {
+      user: SMTP_USER,
+      pass: SMTP_PASS,
+    },
+  });
+
   if (req.method !== "POST") {
     return res.status(405).json({
       success: false,
@@ -77,15 +74,12 @@ export default async function handler(req, res) {
   try {
     const now = Date.now();
 
-    /**
-     * Rate limit protection
-     */
     requestLog = requestLog.filter((time) => now - time < RATE_LIMIT_WINDOW);
 
     if (requestLog.length >= RATE_LIMIT_MAX) {
       return res.status(429).json({
         success: false,
-        error: "Too many requests. Please try again later.",
+        error: "Too many requests",
       });
     }
 
@@ -93,9 +87,6 @@ export default async function handler(req, res) {
 
     const { name, email, message, company } = req.body;
 
-    /**
-     * Honeypot spam protection
-     */
     if (company) {
       return res.status(400).json({
         success: false,
@@ -103,9 +94,6 @@ export default async function handler(req, res) {
       });
     }
 
-    /**
-     * Required fields validation
-     */
     if (!name || !email || !message) {
       return res.status(400).json({
         success: false,
@@ -113,9 +101,6 @@ export default async function handler(req, res) {
       });
     }
 
-    /**
-     * Email format validation
-     */
     if (!emailRegex.test(email)) {
       return res.status(400).json({
         success: false,
@@ -123,9 +108,6 @@ export default async function handler(req, res) {
       });
     }
 
-    /**
-     * Message size limit
-     */
     if (message.length > 2000) {
       return res.status(400).json({
         success: false,
@@ -133,21 +115,15 @@ export default async function handler(req, res) {
       });
     }
 
-    /**
-     * Sanitize inputs
-     */
     const safeName = sanitize(name);
     const safeEmail = sanitize(email);
     const safeMessage = sanitize(message);
 
     const htmlMessage = escapeHtml(safeMessage).replace(/\n/g, "<br>");
 
-    /**
-     * Send email
-     */
     await transporter.sendMail({
-      from: `"Portfolio Contact" <${process.env.SMTP_USER}>`,
-      to: process.env.EMAIL_RECEIVER,
+      from: `"Portfolio Contact" <${SMTP_USER}>`,
+      to: EMAIL_RECEIVER,
       replyTo: `"${safeName}" <${safeEmail}>`,
       subject: `New portfolio message from ${safeName}`,
       text: `
@@ -156,8 +132,6 @@ Email: ${safeEmail}
 
 Message:
 ${safeMessage}
-
-Reply directly to this email to respond.
 `,
       html: `
 <h2>New Portfolio Message</h2>
@@ -167,17 +141,7 @@ Reply directly to this email to respond.
 
 <p><strong>Message:</strong></p>
 <p>${htmlMessage}</p>
-
-<hr>
-
-<p style="font-size:12px;color:#666;">
-Sent from portfolio contact form
-</p>
 `,
-      headers: {
-        "X-Mailer": "Portfolio Contact System",
-        "X-Entity-Ref-ID": Date.now().toString(),
-      },
     });
 
     return res.status(200).json({
