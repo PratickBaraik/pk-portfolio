@@ -55,10 +55,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
      * Send email via Resend
      */
     await resend.emails.send({
-      from: "Portfolio Contact <onboarding@resend.dev>",
+      from: name,
       to: "pratickbaraik56@gmail.com",
       replyTo: email,
-      subject: `New portfolio message from ${name}`,
+      subject: `🎉 ${name} wants to connect with you via Portfolio`,
       text: `
 Name: ${name}
 Email: ${email}
