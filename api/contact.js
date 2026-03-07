@@ -3,42 +3,48 @@ import nodemailer from "nodemailer";
 /**
  * Ensure required environment variables exist
  */
-if (
-  !process.env.EMAIL_USER ||
-  !process.env.EMAIL_PASS ||
-  !process.env.EMAIL_RECEIVER
-) {
-  throw new Error("Missing required email environment variables");
+const requiredEnv = [
+  "SMTP_HOST",
+  "SMTP_PORT",
+  "SMTP_USER",
+  "SMTP_PASS",
+  "EMAIL_RECEIVER",
+];
+
+for (const key of requiredEnv) {
+  if (!process.env[key]) {
+    throw new Error(`Missing environment variable: ${key}`);
+  }
 }
 
 /**
- * Create SMTP transporter using Gmail
- * Gmail requires an App Password (not your normal password)
+ * SMTP transporter (Brevo)
  */
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT),
+  secure: false,
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
   },
 });
 
 /**
- * Basic in-memory rate limiter
- * Limits rapid spam submissions
+ * Basic in-memory rate limiting
  */
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+const RATE_LIMIT_WINDOW = 60 * 1000;
 const RATE_LIMIT_MAX = 5;
 
-let requestLog = [];
+// let requestLog: number[] = [];
 
 /**
- * Email validation regex
+ * Email validation
  */
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
- * Simple input sanitization
+ * Sanitize inputs
  */
 function sanitize(input) {
   if (!input) return "";
@@ -48,12 +54,19 @@ function sanitize(input) {
 }
 
 /**
- * Serverless function handler
+ * Escape HTML
+ */
+function escapeHtml(text) {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+/**
+ * Serverless API handler
  */
 export default async function handler(req, res) {
-  /**
-   * Allow only POST requests
-   */
   if (req.method !== "POST") {
     return res.status(405).json({
       success: false,
@@ -65,7 +78,7 @@ export default async function handler(req, res) {
     const now = Date.now();
 
     /**
-     * Rate limiting
+     * Rate limit protection
      */
     requestLog = requestLog.filter((time) => now - time < RATE_LIMIT_WINDOW);
 
@@ -91,7 +104,7 @@ export default async function handler(req, res) {
     }
 
     /**
-     * Validate required fields
+     * Required fields validation
      */
     if (!name || !email || !message) {
       return res.status(400).json({
@@ -101,7 +114,7 @@ export default async function handler(req, res) {
     }
 
     /**
-     * Validate email format
+     * Email format validation
      */
     if (!emailRegex.test(email)) {
       return res.status(400).json({
@@ -111,7 +124,7 @@ export default async function handler(req, res) {
     }
 
     /**
-     * Limit message length
+     * Message size limit
      */
     if (message.length > 2000) {
       return res.status(400).json({
@@ -127,14 +140,16 @@ export default async function handler(req, res) {
     const safeEmail = sanitize(email);
     const safeMessage = sanitize(message);
 
+    const htmlMessage = escapeHtml(safeMessage).replace(/\n/g, "<br>");
+
     /**
-     * Send email via Gmail SMTP
+     * Send email
      */
     await transporter.sendMail({
-      from: `${safeName}, <${process.env.EMAIL_USER}>`,
+      from: `"Portfolio Contact" <${process.env.SMTP_USER}>`,
       to: process.env.EMAIL_RECEIVER,
-      replyTo: safeEmail,
-      subject: `✨ ${safeName} wants to connect with you via PORTFOLIO!`,
+      replyTo: `"${safeName}" <${safeEmail}>`,
+      subject: `New portfolio message from ${safeName}`,
       text: `
 Name: ${safeName}
 Email: ${safeEmail}
@@ -142,9 +157,27 @@ Email: ${safeEmail}
 Message:
 ${safeMessage}
 
-Looking forwrard to hear from you!
-${safeName}
-      `,
+Reply directly to this email to respond.
+`,
+      html: `
+<h2>New Portfolio Message</h2>
+
+<p><strong>Name:</strong> ${safeName}</p>
+<p><strong>Email:</strong> ${safeEmail}</p>
+
+<p><strong>Message:</strong></p>
+<p>${htmlMessage}</p>
+
+<hr>
+
+<p style="font-size:12px;color:#666;">
+Sent from portfolio contact form
+</p>
+`,
+      headers: {
+        "X-Mailer": "Portfolio Contact System",
+        "X-Entity-Ref-ID": Date.now().toString(),
+      },
     });
 
     return res.status(200).json({
