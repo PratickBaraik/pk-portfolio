@@ -1,7 +1,7 @@
 {
-  "name": "pk-portfolio",
+  "name": "prakashit-kujur-portfolio",
   "private": true,
-  "version": "pk-port@1.0.0",
+  "version": "port-vite@^1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
