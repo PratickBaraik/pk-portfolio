@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 
 /**
- * Rate limiting configuration
+ * Rate limit configuration
  */
 const RATE_LIMIT_WINDOW = 60 * 1000;
 const RATE_LIMIT_MAX = 5;
@@ -14,11 +14,11 @@ let requestLog = [];
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
- * Input sanitization
+ * Sanitize input
  */
-function sanitize(input) {
-  if (!input) return "";
-  return String(input)
+function sanitize(value) {
+  if (!value) return "";
+  return String(value)
     .replace(/[\r\n]/g, "")
     .trim();
 }
@@ -34,9 +34,6 @@ function escapeHtml(text) {
 }
 
 export default async function handler(req, res) {
-  /**
-   * Allow only POST
-   */
   if (req.method !== "POST") {
     return res.status(405).json({
       success: false,
@@ -44,45 +41,41 @@ export default async function handler(req, res) {
     });
   }
 
-  /**
-   * Read environment variables
-   */
-  const SMTP_HOST = process.env.SMTP_HOST || "smtp-relay.brevo.com";
-  const SMTP_PORT = Number(process.env.SMTP_PORT) || 587;
-  const SMTP_USER = process.env.SMTP_USER;
-  const SMTP_PASS = process.env.SMTP_PASS;
-  const EMAIL_RECEIVER = process.env.EMAIL_RECEIVER;
-
-  /**
-   * Validate configuration safely
-   */
-  if (!SMTP_USER || !SMTP_PASS || !EMAIL_RECEIVER) {
-    console.error("SMTP configuration missing", {
-      SMTP_USER: !!SMTP_USER,
-      SMTP_PASS: !!SMTP_PASS,
-      EMAIL_RECEIVER: !!EMAIL_RECEIVER,
-    });
-
-    return res.status(500).json({
-      success: false,
-      error: "Email service is not configured",
-    });
-  }
-
-  /**
-   * Create transporter safely
-   */
-  const transporter = nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: SMTP_PORT,
-    secure: false,
-    auth: {
-      user: SMTP_USER,
-      pass: SMTP_PASS,
-    },
-  });
-
   try {
+    /**
+     * Read environment variables
+     */
+    const SMTP_HOST = process.env.SMTP_HOST;
+    const SMTP_PORT = process.env.SMTP_PORT;
+    const SMTP_USER = process.env.SMTP_USER;
+    const SMTP_PASS = process.env.SMTP_PASS;
+    const EMAIL_RECEIVER = process.env.EMAIL_RECEIVER;
+
+    /**
+     * If SMTP not configured return readable error
+     */
+    if (!SMTP_USER || !SMTP_PASS || !EMAIL_RECEIVER) {
+      console.log("SMTP configuration missing");
+
+      return res.status(500).json({
+        success: false,
+        error: "Email service not configured",
+      });
+    }
+
+    /**
+     * Create transporter
+     */
+    const transporter = nodemailer.createTransport({
+      host: SMTP_HOST || "smtp-relay.brevo.com",
+      port: Number(SMTP_PORT) || 587,
+      secure: false,
+      auth: {
+        user: SMTP_USER,
+        pass: SMTP_PASS,
+      },
+    });
+
     /**
      * Rate limiting
      */
@@ -102,7 +95,7 @@ export default async function handler(req, res) {
     const { name, email, message, company } = req.body;
 
     /**
-     * Honeypot spam trap
+     * Honeypot spam protection
      */
     if (company) {
       return res.status(400).json({
@@ -112,7 +105,7 @@ export default async function handler(req, res) {
     }
 
     /**
-     * Required fields
+     * Validate inputs
      */
     if (!name || !email || !message) {
       return res.status(400).json({
@@ -121,9 +114,6 @@ export default async function handler(req, res) {
       });
     }
 
-    /**
-     * Email validation
-     */
     if (!emailRegex.test(email)) {
       return res.status(400).json({
         success: false,
@@ -131,9 +121,6 @@ export default async function handler(req, res) {
       });
     }
 
-    /**
-     * Limit message size
-     */
     if (message.length > 2000) {
       return res.status(400).json({
         success: false,
@@ -141,9 +128,6 @@ export default async function handler(req, res) {
       });
     }
 
-    /**
-     * Sanitize inputs
-     */
     const safeName = sanitize(name);
     const safeEmail = sanitize(email);
     const safeMessage = sanitize(message);
@@ -173,11 +157,6 @@ ${safeMessage}
 
 <p><strong>Message:</strong></p>
 <p>${htmlMessage}</p>
-
-<hr>
-<p style="font-size:12px;color:#777;">
-Sent from portfolio contact form
-</p>
 `,
     });
 
