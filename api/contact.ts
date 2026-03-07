@@ -2,14 +2,14 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { Resend } from "resend";
 
 /**
- * Initialize Resend using API key stored in Vercel environment variables
+ * Initialize Resend client using API key stored in environment variables
  */
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-/**
- * Serverless function handling contact form submissions
- */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  /**
+   * Allow only POST requests
+   */
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -18,23 +18,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { name, email, message } = req.body;
 
     /**
-     * Send email notification to portfolio owner
+     * Send email
      */
     await resend.emails.send({
-      from: "Portfolio Contact <contact@yourdomain.com>",
+      from: "Portfolio Contact <onboarding@resend.dev>", // verified sender required
       to: "demo1@gmail.com",
       replyTo: email,
       subject: `New portfolio inquiry from ${name}`,
       text: `
-A new creative opportunity just landed in your inbox.
-
 Client Name: ${name}
 Client Email: ${email}
 
 Message:
 ${message}
-
-This could be the start of an exciting collaboration.
 `,
     });
 
