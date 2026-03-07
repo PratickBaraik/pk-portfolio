@@ -17,10 +17,10 @@
     "@emailjs/browser": "^4.4.1",
     "@types/styled-components": "^5.1.36",
     "lucide-react": "^0.577.0",
+    "nodemailer": "^8.0.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.13.1",
-    "resend": "^6.9.3",
     "styled-components": "^6.3.11"
   },
   "devDependencies": {

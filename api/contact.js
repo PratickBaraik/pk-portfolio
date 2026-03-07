@@ -1,13 +1,54 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
 /**
- * Initialize Resend client using environment API key
- * Stored securely in Vercel Environment Variables
+ * Ensure required environment variables exist
  */
-const resend = new Resend(process.env.RESEND_API_KEY);
+if (
+  !process.env.EMAIL_USER ||
+  !process.env.EMAIL_PASS ||
+  !process.env.EMAIL_RECEIVER
+) {
+  throw new Error("Missing required email environment variables");
+}
 
 /**
- * Serverless function for handling contact form
+ * Create SMTP transporter using Gmail
+ * Gmail requires an App Password (not your normal password)
+ */
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+/**
+ * Basic in-memory rate limiter
+ * Limits rapid spam submissions
+ */
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+const RATE_LIMIT_MAX = 5;
+
+let requestLog = [];
+
+/**
+ * Email validation regex
+ */
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * Simple input sanitization
+ */
+function sanitize(input) {
+  if (!input) return "";
+  return String(input)
+    .replace(/[\r\n]/g, "")
+    .trim();
+}
+
+/**
+ * Serverless function handler
  */
 export default async function handler(req, res) {
   /**
@@ -21,11 +62,26 @@ export default async function handler(req, res) {
   }
 
   try {
+    const now = Date.now();
+
+    /**
+     * Rate limiting
+     */
+    requestLog = requestLog.filter((time) => now - time < RATE_LIMIT_WINDOW);
+
+    if (requestLog.length >= RATE_LIMIT_MAX) {
+      return res.status(429).json({
+        success: false,
+        error: "Too many requests. Please try again later.",
+      });
+    }
+
+    requestLog.push(now);
+
     const { name, email, message, company } = req.body;
 
     /**
      * Honeypot spam protection
-     * If this hidden field is filled, treat as bot
      */
     if (company) {
       return res.status(400).json({
@@ -45,7 +101,17 @@ export default async function handler(req, res) {
     }
 
     /**
-     * Prevent excessively large messages
+     * Validate email format
+     */
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid email address",
+      });
+    }
+
+    /**
+     * Limit message length
      */
     if (message.length > 2000) {
       return res.status(400).json({
@@ -55,19 +121,29 @@ export default async function handler(req, res) {
     }
 
     /**
-     * Send email using Resend
+     * Sanitize inputs
      */
-    await resend.emails.send({
-      from: "Portfolio Contact <onboarding@resend.dev>",
-      to: "pratickbaraik56@gmail.com",
-      replyTo: email,
-      subject: `${name} contacted you via portfolio`,
+    const safeName = sanitize(name);
+    const safeEmail = sanitize(email);
+    const safeMessage = sanitize(message);
+
+    /**
+     * Send email via Gmail SMTP
+     */
+    await transporter.sendMail({
+      from: `${safeName}, <${process.env.EMAIL_USER}>`,
+      to: process.env.EMAIL_RECEIVER,
+      replyTo: safeEmail,
+      subject: `✨ ${safeName} wants to connect with you via PORTFOLIO!`,
       text: `
-Name: ${name}
-Email: ${email}
+Name: ${safeName}
+Email: ${safeEmail}
 
 Message:
-${message}
+${safeMessage}
+
+Looking forwrard to hear from you!
+${safeName}
       `,
     });
 
