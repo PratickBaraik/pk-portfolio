@@ -1,7 +1,15 @@
-import { execSync } from "child_process";
-import os from "os";
-import fs from "fs";
+/**
+ * Environment & dependency diagnostic script
+ * Works in Vercel build environment and local Node
+ */
 
+import { execSync } from "node:child_process";
+import os from "node:os";
+import fs from "node:fs";
+
+/**
+ * Execute shell command safely
+ */
 function run(cmd) {
   try {
     return execSync(cmd, { stdio: ["ignore", "pipe", "ignore"] })
@@ -12,9 +20,14 @@ function run(cmd) {
   }
 }
 
+/**
+ * Read dependency version from package.json
+ */
 function getPackageVersion(pkg) {
   try {
-    const pkgJson = JSON.parse(fs.readFileSync("./package.json", "utf8"));
+    const pkgJson = JSON.parse(
+      fs.readFileSync(new URL("../package.json", import.meta.url)),
+    );
 
     return (
       pkgJson.dependencies?.[pkg] ||
@@ -36,7 +49,7 @@ console.log("Release:", os.release());
 
 console.log("\nNode Environment");
 console.log("----------------------------");
-console.log("Node:", run("node -v"));
+console.log("Node:", process.version);
 console.log("NPM:", run("npm -v"));
 console.log("Vercel CLI:", run("vercel --version"));
 
