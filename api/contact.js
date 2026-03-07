@@ -1,4 +1,3 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { Resend } from "resend";
 
 /**
@@ -9,7 +8,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 /**
  * Contact API endpoint
  */
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req, res) {
   /**
    * Only allow POST requests
    */
