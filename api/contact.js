@@ -35,28 +35,38 @@ function escapeHtml(text) {
 
 export default async function handler(req, res) {
   /**
-   * Check required environment variables
+   * Read environment variables
    */
-  const SMTP_HOST = process.env.SMTP_HOST;
-  const SMTP_PORT = process.env.SMTP_PORT;
+  const SMTP_HOST = process.env.SMTP_HOST || "smtp-relay.brevo.com";
+
+  const SMTP_PORT = Number(process.env.SMTP_PORT) || 587;
+
   const SMTP_USER = process.env.SMTP_USER;
   const SMTP_PASS = process.env.SMTP_PASS;
   const EMAIL_RECEIVER = process.env.EMAIL_RECEIVER;
 
-  if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS || !EMAIL_RECEIVER) {
-    console.error("Missing environment variables");
+  /**
+   * If credentials missing, return readable error
+   */
+  if (!SMTP_USER || !SMTP_PASS || !EMAIL_RECEIVER) {
+    console.error("Missing SMTP environment variables:", {
+      SMTP_USER: !!SMTP_USER,
+      SMTP_PASS: !!SMTP_PASS,
+      EMAIL_RECEIVER: !!EMAIL_RECEIVER,
+    });
+
     return res.status(500).json({
       success: false,
-      error: "Server configuration error",
+      error: "Email service not configured correctly",
     });
   }
 
   /**
-   * Create transporter inside handler
+   * Create SMTP transporter
    */
   const transporter = nodemailer.createTransport({
     host: SMTP_HOST,
-    port: Number(SMTP_PORT),
+    port: SMTP_PORT,
     secure: false,
     auth: {
       user: SMTP_USER,
@@ -74,6 +84,9 @@ export default async function handler(req, res) {
   try {
     const now = Date.now();
 
+    /**
+     * Rate limiting
+     */
     requestLog = requestLog.filter((time) => now - time < RATE_LIMIT_WINDOW);
 
     if (requestLog.length >= RATE_LIMIT_MAX) {
@@ -87,6 +100,9 @@ export default async function handler(req, res) {
 
     const { name, email, message, company } = req.body;
 
+    /**
+     * Honeypot spam protection
+     */
     if (company) {
       return res.status(400).json({
         success: false,
@@ -94,6 +110,9 @@ export default async function handler(req, res) {
       });
     }
 
+    /**
+     * Validate inputs
+     */
     if (!name || !email || !message) {
       return res.status(400).json({
         success: false,
@@ -121,6 +140,9 @@ export default async function handler(req, res) {
 
     const htmlMessage = escapeHtml(safeMessage).replace(/\n/g, "<br>");
 
+    /**
+     * Send email
+     */
     await transporter.sendMail({
       from: `"Portfolio Contact" <${SMTP_USER}>`,
       to: EMAIL_RECEIVER,
@@ -141,6 +163,11 @@ ${safeMessage}
 
 <p><strong>Message:</strong></p>
 <p>${htmlMessage}</p>
+
+<hr>
+<p style="font-size:12px;color:#777;">
+Sent from portfolio contact form
+</p>
 `,
     });
 
