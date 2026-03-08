@@ -1,7 +1,6 @@
 /**
  * Vercel Serverless Function
- * Handles portfolio contact form submissions
- * Uses EmailJS REST API (Strict Mode Compatible)
+ * Sends email using EmailJS REST API (Strict Mode Compatible)
  */
 
 /**
@@ -18,7 +17,7 @@ let requestLog = [];
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
- * Remove newline characters and trim
+ * Sanitize input
  */
 function sanitize(value) {
   if (!value) return "";
@@ -29,7 +28,7 @@ function sanitize(value) {
 }
 
 /**
- * Escape HTML characters
+ * Escape HTML
  */
 function escapeHtml(text) {
   return text
@@ -51,7 +50,7 @@ export default async function handler(req, res) {
 
   try {
     /**
-     * EmailJS configuration
+     * EmailJS environment variables
      */
     const SERVICE_ID = process.env.EMAILJS_SERVICE_ID;
     const TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID;
@@ -59,11 +58,11 @@ export default async function handler(req, res) {
     const PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
 
     if (!SERVICE_ID || !TEMPLATE_ID || !PUBLIC_KEY || !PRIVATE_KEY) {
-      console.error("Missing EmailJS environment variables");
+      console.error("EmailJS env variables missing");
 
       return res.status(500).json({
         success: false,
-        error: "EmailJS configuration missing",
+        error: "Email service not configured",
       });
     }
 
@@ -89,7 +88,7 @@ export default async function handler(req, res) {
     const { name, email, message, company } = req.body;
 
     /**
-     * Honeypot spam detection
+     * Honeypot spam protection
      */
     if (company) {
       return res.status(400).json({
@@ -132,7 +131,7 @@ export default async function handler(req, res) {
     const htmlMessage = escapeHtml(safeMessage).replace(/\n/g, "<br>");
 
     /**
-     * Send Email using EmailJS API
+     * EmailJS API request
      */
     const response = await fetch(
       "https://api.emailjs.com/api/v1.0/email/send",
@@ -142,6 +141,9 @@ export default async function handler(req, res) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          /**
+           * Required fields per EmailJS REST API docs
+           */
           service_id: SERVICE_ID,
           template_id: TEMPLATE_ID,
 
@@ -151,10 +153,13 @@ export default async function handler(req, res) {
           user_id: PUBLIC_KEY,
 
           /**
-           * Private key (required in strict mode)
+           * Private key (strict mode)
            */
-          private_key: PRIVATE_KEY,
+          accessToken: PRIVATE_KEY,
 
+          /**
+           * Template variables
+           */
           template_params: {
             name: safeName,
             email: safeEmail,
@@ -176,7 +181,7 @@ export default async function handler(req, res) {
     }
 
     /**
-     * Success
+     * Success response
      */
     return res.status(200).json({
       success: true,
