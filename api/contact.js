@@ -1,7 +1,7 @@
 /**
  * Vercel Serverless Function
  * Handles portfolio contact form submissions
- * Uses EmailJS REST API with Public + Private key authentication
+ * Uses EmailJS REST API (Strict Mode Compatible)
  */
 
 /**
@@ -19,7 +19,6 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
  * Remove newline characters and trim
- * Prevents header injection
  */
 function sanitize(value) {
   if (!value) return "";
@@ -41,7 +40,7 @@ function escapeHtml(text) {
 
 export default async function handler(req, res) {
   /**
-   * Allow POST only
+   * Only POST allowed
    */
   if (req.method !== "POST") {
     return res.status(405).json({
@@ -52,7 +51,7 @@ export default async function handler(req, res) {
 
   try {
     /**
-     * Load EmailJS environment variables
+     * EmailJS configuration
      */
     const SERVICE_ID = process.env.EMAILJS_SERVICE_ID;
     const TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID;
@@ -100,7 +99,7 @@ export default async function handler(req, res) {
     }
 
     /**
-     * Validate required fields
+     * Validate fields
      */
     if (!name || !email || !message) {
       return res.status(400).json({
@@ -109,9 +108,6 @@ export default async function handler(req, res) {
       });
     }
 
-    /**
-     * Validate email format
-     */
     if (!emailRegex.test(email)) {
       return res.status(400).json({
         success: false,
@@ -119,9 +115,6 @@ export default async function handler(req, res) {
       });
     }
 
-    /**
-     * Prevent excessively large messages
-     */
     if (message.length > 2000) {
       return res.status(400).json({
         success: false,
@@ -139,7 +132,7 @@ export default async function handler(req, res) {
     const htmlMessage = escapeHtml(safeMessage).replace(/\n/g, "<br>");
 
     /**
-     * Send email using EmailJS REST API
+     * Send Email using EmailJS API
      */
     const response = await fetch(
       "https://api.emailjs.com/api/v1.0/email/send",
@@ -153,14 +146,14 @@ export default async function handler(req, res) {
           template_id: TEMPLATE_ID,
 
           /**
-           * EmailJS Public Key
+           * Public key
            */
           user_id: PUBLIC_KEY,
 
           /**
-           * EmailJS Private Key (recommended for server environments)
+           * Private key (required in strict mode)
            */
-          accessToken: PRIVATE_KEY,
+          private_key: PRIVATE_KEY,
 
           template_params: {
             name: safeName,
@@ -172,7 +165,7 @@ export default async function handler(req, res) {
     );
 
     /**
-     * Handle EmailJS error responses
+     * Handle EmailJS errors
      */
     if (!response.ok) {
       const errorText = await response.text();
@@ -183,7 +176,7 @@ export default async function handler(req, res) {
     }
 
     /**
-     * Success response
+     * Success
      */
     return res.status(200).json({
       success: true,
