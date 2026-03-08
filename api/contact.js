@@ -1,20 +1,17 @@
 /**
  * Vercel Serverless Function
  * Handles portfolio contact form submissions
+ * Uses EmailJS REST API
  */
 
-import nodemailer from "nodemailer";
+import fetch from "node-fetch";
 
 /**
- * Rate limit settings
- * Allows 5 requests per minute
+ * Rate limit configuration
  */
 const RATE_LIMIT_WINDOW = 60 * 1000;
 const RATE_LIMIT_MAX = 5;
 
-/**
- * Stores timestamps of requests
- */
 let requestLog = [];
 
 /**
@@ -23,8 +20,8 @@ let requestLog = [];
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
- * Removes newline characters and trims input
- * Helps prevent email header injection
+ * Remove newline characters and trim
+ * Prevents header injection
  */
 function sanitize(value) {
   if (!value) return "";
@@ -35,7 +32,7 @@ function sanitize(value) {
 }
 
 /**
- * Escapes HTML characters to prevent HTML injection
+ * Escape HTML characters
  */
 function escapeHtml(text) {
   return text
@@ -49,7 +46,7 @@ function escapeHtml(text) {
  */
 export default async function handler(req, res) {
   /**
-   * Only allow POST requests
+   * Allow POST only
    */
   if (req.method !== "POST") {
     return res.status(405).json({
@@ -60,42 +57,21 @@ export default async function handler(req, res) {
 
   try {
     /**
-     * Load SMTP configuration from environment variables
-     * These must be set in Vercel dashboard
+     * EmailJS configuration from Vercel env
      */
-    const SMTP_HOST = process.env.SMTP_HOST || "smtp-relay.brevo.com";
-    const SMTP_PORT = Number(process.env.SMTP_PORT) || 587;
-    const SMTP_USER = process.env.SMTP_USER;
-    const SMTP_PASS = process.env.SMTP_PASS;
-    const EMAIL_RECEIVER = process.env.EMAIL_RECEIVER;
+    const SERVICE_ID = process.env.EMAILJS_SERVICE_ID;
+    const TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID;
+    const PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY;
 
-    /**
-     * Ensure required variables exist
-     */
-    if (!SMTP_USER || !SMTP_PASS || !EMAIL_RECEIVER) {
-      console.error("SMTP environment variables missing");
-
+    if (!SERVICE_ID || !TEMPLATE_ID || !PUBLIC_KEY) {
       return res.status(500).json({
         success: false,
-        error: "Email service not configured",
+        error: "EmailJS configuration missing",
       });
     }
 
     /**
-     * Create SMTP transporter
-     */
-    const transporter = nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: SMTP_PORT,
-      secure: false,
-      auth: {
-        user: SMTP_USER,
-        pass: SMTP_PASS,
-      },
-    });
-
-    /**
-     * Rate limiting logic
+     * Rate limiting
      */
     const now = Date.now();
 
@@ -104,19 +80,19 @@ export default async function handler(req, res) {
     if (requestLog.length >= RATE_LIMIT_MAX) {
       return res.status(429).json({
         success: false,
-        error: "Too many requests. Please try again later.",
+        error: "Too many requests",
       });
     }
 
     requestLog.push(now);
 
     /**
-     * Extract form data
+     * Extract form fields
      */
     const { name, email, message, company } = req.body;
 
     /**
-     * Honeypot spam field
+     * Honeypot spam detection
      */
     if (company) {
       return res.status(400).json({
@@ -126,7 +102,7 @@ export default async function handler(req, res) {
     }
 
     /**
-     * Validate required fields
+     * Required field validation
      */
     if (!name || !email || !message) {
       return res.status(400).json({
@@ -136,7 +112,7 @@ export default async function handler(req, res) {
     }
 
     /**
-     * Validate email format
+     * Email validation
      */
     if (!emailRegex.test(email)) {
       return res.status(400).json({
@@ -146,7 +122,7 @@ export default async function handler(req, res) {
     }
 
     /**
-     * Prevent extremely large messages
+     * Prevent extremely long messages
      */
     if (message.length > 2000) {
       return res.status(400).json({
@@ -162,36 +138,34 @@ export default async function handler(req, res) {
     const safeEmail = sanitize(email);
     const safeMessage = sanitize(message);
 
-    /**
-     * Convert message to HTML
-     */
     const htmlMessage = escapeHtml(safeMessage).replace(/\n/g, "<br>");
 
     /**
-     * Send email
+     * Send email via EmailJS REST API
      */
-    await transporter.sendMail({
-      from: `"Portfolio Contact" <${SMTP_USER}>`,
-      to: EMAIL_RECEIVER,
-      replyTo: `"${safeName}" <${safeEmail}>`,
-      subject: `New portfolio message from ${safeName}`,
-      text: `
-Name: ${safeName}
-Email: ${safeEmail}
+    const response = await fetch(
+      "https://api.emailjs.com/api/v1.0/email/send",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          service_id: SERVICE_ID,
+          template_id: TEMPLATE_ID,
+          user_id: PUBLIC_KEY,
+          template_params: {
+            name: safeName,
+            email: safeEmail,
+            message: htmlMessage,
+          },
+        }),
+      },
+    );
 
-Message:
-${safeMessage}
-`,
-      html: `
-<h2>New Portfolio Message</h2>
-
-<p><strong>Name:</strong> ${safeName}</p>
-<p><strong>Email:</strong> ${safeEmail}</p>
-
-<p><strong>Message:</strong></p>
-<p>${htmlMessage}</p>
-`,
-    });
+    if (!response.ok) {
+      throw new Error("EmailJS API error");
+    }
 
     /**
      * Success response
@@ -201,9 +175,6 @@ ${safeMessage}
       message: "Email sent successfully",
     });
   } catch (error) {
-    /**
-     * Catch runtime errors
-     */
     console.error("Contact API Error:", error);
 
     return res.status(500).json({
