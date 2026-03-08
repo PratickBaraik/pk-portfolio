@@ -1,7 +1,7 @@
 /**
  * Vercel Serverless Function
  * Handles portfolio contact form submissions
- * Uses EmailJS REST API
+ * Uses EmailJS REST API with Public + Private key authentication
  */
 
 /**
@@ -52,13 +52,14 @@ export default async function handler(req, res) {
 
   try {
     /**
-     * EmailJS environment variables
+     * Load EmailJS environment variables
      */
     const SERVICE_ID = process.env.EMAILJS_SERVICE_ID;
     const TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID;
     const PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY;
+    const PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
 
-    if (!SERVICE_ID || !TEMPLATE_ID || !PUBLIC_KEY) {
+    if (!SERVICE_ID || !TEMPLATE_ID || !PUBLIC_KEY || !PRIVATE_KEY) {
       console.error("Missing EmailJS environment variables");
 
       return res.status(500).json({
@@ -89,7 +90,7 @@ export default async function handler(req, res) {
     const { name, email, message, company } = req.body;
 
     /**
-     * Honeypot spam field
+     * Honeypot spam detection
      */
     if (company) {
       return res.status(400).json({
@@ -108,6 +109,9 @@ export default async function handler(req, res) {
       });
     }
 
+    /**
+     * Validate email format
+     */
     if (!emailRegex.test(email)) {
       return res.status(400).json({
         success: false,
@@ -115,6 +119,9 @@ export default async function handler(req, res) {
       });
     }
 
+    /**
+     * Prevent excessively large messages
+     */
     if (message.length > 2000) {
       return res.status(400).json({
         success: false,
@@ -132,7 +139,7 @@ export default async function handler(req, res) {
     const htmlMessage = escapeHtml(safeMessage).replace(/\n/g, "<br>");
 
     /**
-     * Send email via EmailJS REST API
+     * Send email using EmailJS REST API
      */
     const response = await fetch(
       "https://api.emailjs.com/api/v1.0/email/send",
@@ -146,9 +153,14 @@ export default async function handler(req, res) {
           template_id: TEMPLATE_ID,
 
           /**
-           * EmailJS expects user_id for public key
+           * EmailJS Public Key
            */
           user_id: PUBLIC_KEY,
+
+          /**
+           * EmailJS Private Key (recommended for server environments)
+           */
+          accessToken: PRIVATE_KEY,
 
           template_params: {
             name: safeName,
@@ -164,6 +176,7 @@ export default async function handler(req, res) {
      */
     if (!response.ok) {
       const errorText = await response.text();
+
       console.error("EmailJS API Response:", errorText);
 
       throw new Error(`EmailJS API error: ${errorText}`);
