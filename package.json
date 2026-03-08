@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
+    "@emailjs/nodejs": "^5.0.2",
     "@types/styled-components": "^5.1.36",
     "lucide-react": "^0.577.0",
     "nodemailer": "^8.0.1",
