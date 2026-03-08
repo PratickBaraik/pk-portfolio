@@ -1,0 +1,8 @@
+.music-player {
+  width: 320px;
+  padding: 20px;
+  background: #111;
+  color: white;
+  border-radius: 12px;
+  text-align: center;
+}

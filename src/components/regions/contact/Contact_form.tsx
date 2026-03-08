@@ -57,8 +57,6 @@ const Contact: React.FC = () => {
 
   return (
     <section className={styles.contact_section}>
-      <h2>Contact</h2>
-
       <form ref={form} onSubmit={sendEmail} className={styles.contact_form}>
         <label>Name</label>
         <input type="text" name="name" placeholder="Enter your name" required />

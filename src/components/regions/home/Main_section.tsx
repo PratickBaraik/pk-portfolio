@@ -1,4 +1,5 @@
 import styles from "./style/Main.module.css";
+import AudioPlayer from "./Audioplayer";
 
 const Main_Canvas = () => {
   return (
@@ -12,6 +13,7 @@ const Main_Canvas = () => {
         </p>
         <button>Know More</button>
       </div>
+      <AudioPlayer />
     </section>
   );
 };

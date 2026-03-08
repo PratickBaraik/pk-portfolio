@@ -1,0 +1,14 @@
+.icon-btn {
+  border: none;
+  background: #222;
+  color: white;
+  font-size: 18px;
+  padding: 10px 14px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.icon-btn:hover {
+  background: #444;
+}
