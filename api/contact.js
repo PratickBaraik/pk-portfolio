@@ -1,6 +1,7 @@
 /**
  * Vercel Serverless Function
- * Sends email using EmailJS REST API (Strict Mode Compatible)
+ * Secure EmailJS contact endpoint
+ * Compatible with EmailJS Strict Mode
  */
 
 /**
@@ -17,18 +18,17 @@ let requestLog = [];
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
- * Sanitize input
+ * Sanitize input to prevent header injection
  */
 function sanitize(value) {
   if (!value) return "";
-
   return String(value)
     .replace(/[\r\n]/g, "")
     .trim();
 }
 
 /**
- * Escape HTML
+ * Escape HTML characters
  */
 function escapeHtml(text) {
   return text
@@ -39,7 +39,7 @@ function escapeHtml(text) {
 
 export default async function handler(req, res) {
   /**
-   * Only POST allowed
+   * Allow POST only
    */
   if (req.method !== "POST") {
     return res.status(405).json({
@@ -50,7 +50,7 @@ export default async function handler(req, res) {
 
   try {
     /**
-     * EmailJS environment variables
+     * Load environment variables
      */
     const SERVICE_ID = process.env.EMAILJS_SERVICE_ID;
     const TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID;
@@ -58,7 +58,7 @@ export default async function handler(req, res) {
     const PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
 
     if (!SERVICE_ID || !TEMPLATE_ID || !PUBLIC_KEY || !PRIVATE_KEY) {
-      console.error("EmailJS env variables missing");
+      console.error("Missing EmailJS environment variables");
 
       return res.status(500).json({
         success: false,
@@ -88,7 +88,7 @@ export default async function handler(req, res) {
     const { name, email, message, company } = req.body;
 
     /**
-     * Honeypot spam protection
+     * Honeypot spam detection
      */
     if (company) {
       return res.status(400).json({
@@ -98,7 +98,7 @@ export default async function handler(req, res) {
     }
 
     /**
-     * Validate fields
+     * Validate required fields
      */
     if (!name || !email || !message) {
       return res.status(400).json({
@@ -107,6 +107,9 @@ export default async function handler(req, res) {
       });
     }
 
+    /**
+     * Validate email
+     */
     if (!emailRegex.test(email)) {
       return res.status(400).json({
         success: false,
@@ -114,6 +117,9 @@ export default async function handler(req, res) {
       });
     }
 
+    /**
+     * Prevent extremely large messages
+     */
     if (message.length > 2000) {
       return res.status(400).json({
         success: false,
@@ -131,7 +137,7 @@ export default async function handler(req, res) {
     const htmlMessage = escapeHtml(safeMessage).replace(/\n/g, "<br>");
 
     /**
-     * EmailJS API request
+     * EmailJS REST API request
      */
     const response = await fetch(
       "https://api.emailjs.com/api/v1.0/email/send",
@@ -139,11 +145,13 @@ export default async function handler(req, res) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+
+          /**
+           * Strict mode private key authentication
+           */
+          Authorization: `Bearer ${PRIVATE_KEY}`,
         },
         body: JSON.stringify({
-          /**
-           * Required fields per EmailJS REST API docs
-           */
           service_id: SERVICE_ID,
           template_id: TEMPLATE_ID,
 
@@ -153,12 +161,7 @@ export default async function handler(req, res) {
           user_id: PUBLIC_KEY,
 
           /**
-           * Private key (strict mode)
-           */
-          accessToken: PRIVATE_KEY,
-
-          /**
-           * Template variables
+           * Template parameters
            */
           template_params: {
             name: safeName,
@@ -177,7 +180,7 @@ export default async function handler(req, res) {
 
       console.error("EmailJS API Response:", errorText);
 
-      throw new Error(`EmailJS API error: ${errorText}`);
+      throw new Error(errorText);
     }
 
     /**

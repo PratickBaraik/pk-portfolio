@@ -17,15 +17,15 @@ const Contact: React.FC = () => {
      * Cast form for TypeScript field access
      */
     const formData = form.current as HTMLFormElement & {
-      client_name: { value: string };
-      client_email: { value: string };
-      client_message: { value: string };
+      name: { value: string };
+      email: { value: string };
+      message: { value: string };
     };
 
     const payload = {
-      name: formData.client_name.value,
-      email: formData.client_email.value,
-      message: formData.client_message.value,
+      name: formData.name.value,
+      email: formData.email.value,
+      message: formData.message.value,
     };
 
     try {
@@ -61,24 +61,19 @@ const Contact: React.FC = () => {
 
       <form ref={form} onSubmit={sendEmail} className={styles.contact_form}>
         <label>Name</label>
-        <input
-          type="text"
-          name="client_name"
-          placeholder="Enter your name"
-          required
-        />
+        <input type="text" name="name" placeholder="Enter your name" required />
 
         <label>Email</label>
         <input
           type="email"
-          name="client_email"
+          name="email"
           placeholder="Enter your email"
           required
         />
 
         <label>Message</label>
         <textarea
-          name="client_message"
+          name="message"
           rows={5}
           placeholder="Enter your message"
           required
