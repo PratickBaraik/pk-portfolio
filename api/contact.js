@@ -1,45 +1,25 @@
 /**
  * Vercel Serverless Function
- * Secure EmailJS contact endpoint
- * Compatible with EmailJS Strict Mode
+ * EmailJS contact API (validated for strict-mode + Vercel runtime)
  */
 
-/**
- * Rate limit configuration
- */
-const RATE_LIMIT_WINDOW = 60 * 1000;
-const RATE_LIMIT_MAX = 5;
+import emailjs from "@emailjs/nodejs";
 
-let requestLog = [];
+// /**
+//  * Declare process for TypeScript without requiring @types/node
+//  */
+// declare const process: {
+//   env: Record<string, string | undefined>;
+// };
 
 /**
- * Email validation regex
+ * Simple email validation
  */
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/**
- * Sanitize input to prevent header injection
- */
-function sanitize(value) {
-  if (!value) return "";
-  return String(value)
-    .replace(/[\r\n]/g, "")
-    .trim();
-}
-
-/**
- * Escape HTML characters
- */
-function escapeHtml(text) {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
-
 export default async function handler(req, res) {
   /**
-   * Allow POST only
+   * Only allow POST
    */
   if (req.method !== "POST") {
     return res.status(405).json({
@@ -51,15 +31,17 @@ export default async function handler(req, res) {
   try {
     /**
      * Load environment variables
+     * trim() avoids hidden whitespace errors
      */
-    const SERVICE_ID = process.env.EMAILJS_SERVICE_ID;
-    const TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID;
-    const PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY;
-    const PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
+    const SERVICE_ID = process.env.EMAILJS_SERVICE_ID?.trim();
+    const TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID?.trim();
+    const PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY?.trim();
+    const PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY?.trim();
 
+    /**
+     * Validate configuration
+     */
     if (!SERVICE_ID || !TEMPLATE_ID || !PUBLIC_KEY || !PRIVATE_KEY) {
-      console.error("Missing EmailJS environment variables");
-
       return res.status(500).json({
         success: false,
         error: "Email service not configured",
@@ -67,38 +49,15 @@ export default async function handler(req, res) {
     }
 
     /**
-     * Rate limiting
+     * Extract request body safely
      */
-    const now = Date.now();
-
-    requestLog = requestLog.filter((t) => now - t < RATE_LIMIT_WINDOW);
-
-    if (requestLog.length >= RATE_LIMIT_MAX) {
-      return res.status(429).json({
-        success: false,
-        error: "Too many requests",
-      });
-    }
-
-    requestLog.push(now);
+    const body = req.body ?? {};
+    const name = body.name?.trim();
+    const email = body.email?.trim();
+    const message = body.message?.trim();
 
     /**
-     * Extract request body
-     */
-    const { name, email, message, company } = req.body;
-
-    /**
-     * Honeypot spam detection
-     */
-    if (company) {
-      return res.status(400).json({
-        success: false,
-        error: "Spam detected",
-      });
-    }
-
-    /**
-     * Validate required fields
+     * Validate inputs
      */
     if (!name || !email || !message) {
       return res.status(400).json({
@@ -107,9 +66,6 @@ export default async function handler(req, res) {
       });
     }
 
-    /**
-     * Validate email
-     */
     if (!emailRegex.test(email)) {
       return res.status(400).json({
         success: false,
@@ -118,70 +74,22 @@ export default async function handler(req, res) {
     }
 
     /**
-     * Prevent extremely large messages
+     * Send email using EmailJS Node SDK
+     * accessToken is required for strict mode
      */
-    if (message.length > 2000) {
-      return res.status(400).json({
-        success: false,
-        error: "Message too long",
-      });
-    }
-
-    /**
-     * Sanitize inputs
-     */
-    const safeName = sanitize(name);
-    const safeEmail = sanitize(email);
-    const safeMessage = sanitize(message);
-
-    const htmlMessage = escapeHtml(safeMessage).replace(/\n/g, "<br>");
-
-    /**
-     * EmailJS REST API request
-     */
-    const response = await fetch(
-      "https://api.emailjs.com/api/v1.0/email/send",
+    await emailjs.send(
+      SERVICE_ID,
+      TEMPLATE_ID,
       {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-
-          /**
-           * Strict mode private key authentication
-           */
-          Authorization: `Bearer ${PRIVATE_KEY}`,
-        },
-        body: JSON.stringify({
-          service_id: SERVICE_ID,
-          template_id: TEMPLATE_ID,
-
-          /**
-           * Public key
-           */
-          user_id: PUBLIC_KEY,
-
-          /**
-           * Template parameters
-           */
-          template_params: {
-            name: safeName,
-            email: safeEmail,
-            message: htmlMessage,
-          },
-        }),
+        name,
+        email,
+        message,
+      },
+      {
+        publicKey: PUBLIC_KEY,
+        accessToken: PRIVATE_KEY,
       },
     );
-
-    /**
-     * Handle EmailJS errors
-     */
-    if (!response.ok) {
-      const errorText = await response.text();
-
-      console.error("EmailJS API Response:", errorText);
-
-      throw new Error(errorText);
-    }
 
     /**
      * Success response
