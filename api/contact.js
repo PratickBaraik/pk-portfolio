@@ -1,26 +1,23 @@
 /**
  * Vercel Serverless Function
- * EmailJS contact API (validated for strict-mode + Vercel runtime)
+ * EmailJS contact API
  */
 
 import emailjs from "@emailjs/nodejs";
 
 // /**
-//  * Declare process for TypeScript without requiring @types/node
+//  * Declare process for TS without installing node types
 //  */
 // declare const process: {
 //   env: Record<string, string | undefined>;
 // };
 
 /**
- * Simple email validation
+ * Email validation regex
  */
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default async function handler(req, res) {
-  /**
-   * Only allow POST
-   */
   if (req.method !== "POST") {
     return res.status(405).json({
       success: false,
@@ -31,16 +28,12 @@ export default async function handler(req, res) {
   try {
     /**
      * Load environment variables
-     * trim() avoids hidden whitespace errors
      */
     const SERVICE_ID = process.env.EMAILJS_SERVICE_ID?.trim();
     const TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID?.trim();
     const PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY?.trim();
     const PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY?.trim();
 
-    /**
-     * Validate configuration
-     */
     if (!SERVICE_ID || !TEMPLATE_ID || !PUBLIC_KEY || !PRIVATE_KEY) {
       return res.status(500).json({
         success: false,
@@ -49,16 +42,19 @@ export default async function handler(req, res) {
     }
 
     /**
-     * Extract request body safely
+     * Initialize EmailJS SDK
+     * REQUIRED for strict mode authentication
      */
-    const body = req.body ?? {};
-    const name = body.name?.trim();
-    const email = body.email?.trim();
-    const message = body.message?.trim();
+    emailjs.init({
+      publicKey: PUBLIC_KEY,
+      privateKey: PRIVATE_KEY,
+    });
 
     /**
-     * Validate inputs
+     * Extract request body
      */
+    const { name, email, message } = req.body ?? {};
+
     if (!name || !email || !message) {
       return res.status(400).json({
         success: false,
@@ -74,26 +70,14 @@ export default async function handler(req, res) {
     }
 
     /**
-     * Send email using EmailJS Node SDK
-     * accessToken is required for strict mode
+     * Send email
      */
-    await emailjs.send(
-      SERVICE_ID,
-      TEMPLATE_ID,
-      {
-        name,
-        email,
-        message,
-      },
-      {
-        publicKey: PUBLIC_KEY,
-        accessToken: PRIVATE_KEY,
-      },
-    );
+    await emailjs.send(SERVICE_ID, TEMPLATE_ID, {
+      name,
+      email,
+      message,
+    });
 
-    /**
-     * Success response
-     */
     return res.status(200).json({
       success: true,
       message: "Email sent successfully",
