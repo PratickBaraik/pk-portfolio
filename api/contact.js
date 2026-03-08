@@ -2,14 +2,13 @@
  * Vercel Serverless Function
  * Handles portfolio contact form submissions
  * Uses EmailJS REST API
- * Updated for correct EmailJS payload and improved debugging
  */
 
 /**
  * Rate limit configuration
  */
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
-const RATE_LIMIT_MAX = 5; // max requests per window
+const RATE_LIMIT_WINDOW = 60 * 1000;
+const RATE_LIMIT_MAX = 5;
 
 let requestLog = [];
 
@@ -32,7 +31,6 @@ function sanitize(value) {
 
 /**
  * Escape HTML characters
- * Prevents HTML injection in email body
  */
 function escapeHtml(text) {
   return text
@@ -41,12 +39,9 @@ function escapeHtml(text) {
     .replace(/>/g, "&gt;");
 }
 
-/**
- * Main API handler
- */
 export default async function handler(req, res) {
   /**
-   * Allow POST requests only
+   * Allow POST only
    */
   if (req.method !== "POST") {
     return res.status(405).json({
@@ -57,26 +52,23 @@ export default async function handler(req, res) {
 
   try {
     /**
-     * EmailJS configuration from Vercel environment variables
+     * EmailJS environment variables
      */
     const SERVICE_ID = process.env.EMAILJS_SERVICE_ID;
     const TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID;
     const PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY;
 
-    /**
-     * Ensure required configuration exists
-     */
     if (!SERVICE_ID || !TEMPLATE_ID || !PUBLIC_KEY) {
       console.error("Missing EmailJS environment variables");
 
       return res.status(500).json({
         success: false,
-        error: "Email service not configured",
+        error: "EmailJS configuration missing",
       });
     }
 
     /**
-     * Rate limiting logic
+     * Rate limiting
      */
     const now = Date.now();
 
@@ -85,19 +77,19 @@ export default async function handler(req, res) {
     if (requestLog.length >= RATE_LIMIT_MAX) {
       return res.status(429).json({
         success: false,
-        error: "Too many requests. Please try again later.",
+        error: "Too many requests",
       });
     }
 
     requestLog.push(now);
 
     /**
-     * Extract form fields
+     * Extract request body
      */
     const { name, email, message, company } = req.body;
 
     /**
-     * Honeypot spam detection
+     * Honeypot spam field
      */
     if (company) {
       return res.status(400).json({
@@ -116,9 +108,6 @@ export default async function handler(req, res) {
       });
     }
 
-    /**
-     * Validate email format
-     */
     if (!emailRegex.test(email)) {
       return res.status(400).json({
         success: false,
@@ -126,9 +115,6 @@ export default async function handler(req, res) {
       });
     }
 
-    /**
-     * Prevent excessively large messages
-     */
     if (message.length > 2000) {
       return res.status(400).json({
         success: false,
@@ -137,15 +123,12 @@ export default async function handler(req, res) {
     }
 
     /**
-     * Sanitize user inputs
+     * Sanitize inputs
      */
     const safeName = sanitize(name);
     const safeEmail = sanitize(email);
     const safeMessage = sanitize(message);
 
-    /**
-     * Convert message to HTML-safe format
-     */
     const htmlMessage = escapeHtml(safeMessage).replace(/\n/g, "<br>");
 
     /**
@@ -158,15 +141,15 @@ export default async function handler(req, res) {
         headers: {
           "Content-Type": "application/json",
         },
-
-        /**
-         * EmailJS request payload
-         * public_key is required instead of user_id
-         */
         body: JSON.stringify({
           service_id: SERVICE_ID,
           template_id: TEMPLATE_ID,
-          public_key: PUBLIC_KEY,
+
+          /**
+           * EmailJS expects user_id for public key
+           */
+          user_id: PUBLIC_KEY,
+
           template_params: {
             name: safeName,
             email: safeEmail,
@@ -177,11 +160,10 @@ export default async function handler(req, res) {
     );
 
     /**
-     * Handle EmailJS errors with detailed logging
+     * Handle EmailJS error responses
      */
     if (!response.ok) {
       const errorText = await response.text();
-
       console.error("EmailJS API Response:", errorText);
 
       throw new Error(`EmailJS API error: ${errorText}`);
@@ -195,9 +177,6 @@ export default async function handler(req, res) {
       message: "Email sent successfully",
     });
   } catch (error) {
-    /**
-     * Catch runtime errors
-     */
     console.error("Contact API Error:", error);
 
     return res.status(500).json({
