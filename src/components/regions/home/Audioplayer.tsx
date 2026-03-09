@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
-import "./style/Audioplayer.module.css";
+import styles from "./style/Audioplayer.module.css";
+import musicicon from "./assets/music_icon.png";
 
 /*
 Custom horizontal music player.
@@ -30,23 +31,29 @@ export default function AudioPlayer() {
   };
 
   return (
-    <div className="audio-container">
+    <div className={styles.audio_container}>
       {/* Left music icon */}
-      <div className="music-icon">♪</div>
+      <div className={styles.music_icon}>
+        <img
+          src={musicicon}
+          alt="music playing icon"
+          style={{ width: "40px", height: "40px" }}
+        />
+      </div>
 
       {/* waveform animation */}
-      <div className={`waveform ${playing ? "active" : ""}`}>
+      <div className={`${styles.waveform} ${playing ? styles.active : ""}`}>
         {Array.from({ length: 9 }).map((_, i) => (
           <span key={i}></span>
         ))}
       </div>
 
       {/* play button */}
-      <button className="play-btn" onClick={toggleAudio}>
+      <button className={styles.play_btn} onClick={toggleAudio}>
         {playing ? "❚❚" : "▶"}
       </button>
 
-      <audio ref={audioRef} src="/music/sample.mp3" />
+      <audio ref={audioRef} src="/music/background.mp3" />
     </div>
   );
 }
