@@ -1,6 +1,6 @@
-import { useRef, useState } from "react";
 import styles from "./style/Audioplayer.module.css";
 import musicicon from "./assets/music_icon.png";
+import { useAudio } from "@/context/AudioContext";
 
 /*
 Custom horizontal music player.
@@ -9,26 +9,15 @@ Features
 - play / pause toggle
 - waveform animation
 - circular music icon
+
+Important
+- Audio element is handled globally in AudioProvider
+- This component only controls playback UI
 */
 
 export default function AudioPlayer() {
-  const audioRef = useRef<HTMLAudioElement>(null);
-
-  const [playing, setPlaying] = useState(false);
-
-  const toggleAudio = () => {
-    const audio = audioRef.current;
-
-    if (!audio) return;
-
-    if (playing) {
-      audio.pause();
-    } else {
-      audio.play();
-    }
-
-    setPlaying(!playing);
-  };
+  /* access global audio state and controls */
+  const { playing, toggleAudio } = useAudio();
 
   return (
     <div className={styles.audio_container}>
@@ -48,12 +37,14 @@ export default function AudioPlayer() {
         ))}
       </div>
 
-      {/* play button */}
-      <button className={styles.play_btn} onClick={toggleAudio}>
+      {/* play / pause button */}
+      <button
+        className={styles.play_btn}
+        onClick={toggleAudio}
+        aria-label={playing ? "Pause music" : "Play music"}
+      >
         {playing ? "❚❚" : "▶"}
       </button>
-
-      <audio ref={audioRef} src="/music/background.mp3" />
     </div>
   );
 }
