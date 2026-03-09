@@ -43,7 +43,7 @@ export default function AudioPlayer() {
 
       {/* waveform animation */}
       <div className={`${styles.waveform} ${playing ? styles.active : ""}`}>
-        {Array.from({ length: 9 }).map((_, i) => (
+        {Array.from({ length: 15 }).map((_, i) => (
           <span key={i}></span>
         ))}
       </div>
