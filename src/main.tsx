@@ -6,6 +6,7 @@ import { AudioProvider } from "@/context/AudioContext";
 import HomePage from "./features/home/Home";
 import Works from "./features/works/Work";
 import Contact from "./features/contact/Contact";
+import "/index.css";
 // import Gearlist from "./features/gearlist/Gearlist";
 
 /*
